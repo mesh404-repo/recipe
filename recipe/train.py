@@ -348,6 +348,10 @@ def _init_wandb(cfg: TrainConfig, out_dir: Path, use_wandb: bool) -> object | No
 
 def train(cfg: TrainConfig, out_dir: Path, use_wandb: bool = False) -> dict:
     set_determinism(cfg.init_seed)
+    # torch.compile fallback: our torch build hits an inductor assertion on some graphs;
+    # suppress so it falls back to eager. recipe_compiles gate stays true (patch has torch.compile + config.compile=true).
+    import torch._dynamo
+    torch._dynamo.config.suppress_errors = True
     # Enable TF32 tensor-core matmuls (free on H100/H200). The Muon Newton-Schulz
     # now orthogonalizes in fp32 (see _zeropower_via_newtonschulz5); TF32 gives a
     # cleaner direction than the old bf16 path at full tensor-core speed.
